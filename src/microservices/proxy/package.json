@@ -1,0 +1,20 @@
+{
+  "name": "proxy",
+  "version": "1.0.0",
+  "description": "",
+  "license": "ISC",
+  "author": "Uladzislau Shastakou",
+  "type": "module",
+  "main": "src/server.ts",
+  "scripts": {
+    "start": "node ./src/server.ts"
+  },
+  "dependencies": {
+    "express": "^5.2.1",
+    "http-proxy-middleware": "^4.1.1"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.9.3"
+  }
+}
