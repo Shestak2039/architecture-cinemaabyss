@@ -1,0 +1,65 @@
+@startuml
+title CinemaAbyss Container Diagram (To-Be)
+
+top to bottom direction
+
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+
+Person(user, "User", "Пользователь Cinema Abyss")
+
+System_Ext(recommender, "Recommendation System", "Внешняя рекомендательная система")
+System_Ext(payment, "Payment System", "Внешняя платёжная система")
+System_Ext(cinemas, "Online Cinemas", "Внешние онлайн-кинотеатры / источники контента")
+System_Ext(s3, "Object Storage (S3)", "Внешнее хранилище видеоконтента")
+
+Container_Boundary(CinemaAbyss, "CinemaAbyss System") {
+  Container(proxy, "Proxy Service", "API Gateway", "Переключатель трафика")
+
+  Container(monolith, "Monolith", "Go", "Оставшиеся домены")
+  ContainerDb(monoDb, "Monolith DB", "PostgreSQL", "Данные ещё не вынесенных доменов")
+
+  Container(movies, "Movies Service", "Go", "Сервис метаданных: жанры, актёры, оценки")
+  ContainerDb(moviesDb, "Movies DB", "PostgreSQL", "Метаданные фильмов")
+
+  Container(events, "Events Service", "Go", "Сервис событий")
+  ContainerQueue(kafka, "Kafka", "Kafka", "Брокер событий")
+
+  Container(auth, "Auth Service", "", "Аутентификация / авторизация")
+  ContainerDb(authDb, "Auth DB", "PostgreSQL", "Учётные данные")
+
+  Container(viewing, "Viewing Service", "", "Отдаёт контент для просмотра")
+
+  Container(paymentSvc, "Payment Service", "", "Работа с платёжной системой")
+  ContainerDb(payDb, "Payment DB", "PostgreSQL", "Платежи и транзакции")
+
+  Container(recoSvc, "Recommendation Service", "", "Отдаёт подборки, обменивается событиями с внешней системой")
+  ContainerDb(recoDb, "Recommendations Store", "Redis / PostgreSQL", "Готовые подборки рекомендаций")
+  ContainerQueue(rabbit, "RabbitMQ", "RabbitMQ", "Асинхронный обмен с реком. системой")
+}
+
+Rel(user, proxy, "Использует систему (REST)")
+
+Rel(proxy, monolith, "")
+Rel(proxy, movies, "")
+Rel(proxy, auth, "")
+Rel(proxy, viewing, "")
+Rel(proxy, paymentSvc, "")
+Rel(proxy, events, "")
+Rel(proxy, recoSvc, "")
+
+Rel(monolith, monoDb, "Читает/пишет")
+Rel(movies, moviesDb, "Читает/пишет")
+Rel(auth, authDb, "Читает/пишет")
+Rel(paymentSvc, payDb, "Читает/пишет")
+Rel(recoSvc, recoDb, "Читает/пишет подборки")
+
+Rel(events, kafka, "Produce / consume событий")
+
+Rel(recoSvc, rabbit, "Публикует события / читает подборки")
+Rel(recommender, rabbit, "Пишет подборки")
+
+Rel(paymentSvc, payment, "Проводит платежи")
+Rel(viewing, s3, "Читает видео")
+Rel(viewing, cinemas, "Получает контент")
+
+@enduml
